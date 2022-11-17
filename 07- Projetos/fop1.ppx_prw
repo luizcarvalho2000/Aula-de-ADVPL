@@ -1,0 +1,53 @@
+#line 1 "c:/totvs12/protheus/protheus/include\Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\dialog.ch"
+#line 29 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\font.ch"
+#line 30 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\ptmenu.ch"
+#line 32 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\print.ch"
+#line 34 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\colors.ch"
+#line 36 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\folder.ch"
+#line 38 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\msobject.ch"
+#line 39 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\vkey.ch"
+#line 43 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\winapi.ch"
+#line 45 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\fwcommand.ch"
+#line 48 "Protheus.ch"
+#line 1 "c:/totvs12/protheus/protheus/include\fwcss.ch"
+#line 51 "Protheus.ch"
+#line 2 "c:\vscodeproj\workspace\advpl\07- projetos\\c:/vscodeproj/workspace/advpl/07- projetos/fop1.prw"
+Function U_FOP1()
+Local nNumero1
+Local nNumero2
+
+Local nResult
+Local nResult1
+Local nResult2
+Local nResult3
+Local nResult4
+Local nResult5
+
+nNumero1 := 4
+nNumero2 := 2
+
+nResult  := nNumero1 + nNumero2
+nResult1 := nNumero1 - nNumero2
+nResult2 := nNumero1 * nNumero2
+nResult3 := nNumero1 / nNumero2
+nResult4 := nNumero1 ^ nNumero2
+nResult5 := nNumero1 % nNumero2
+
+Iif(FindFunction("APMsgInfo"), APMsgInfo(nResult, "Soma"), MsgInfo(nResult, "Soma"))
+Iif(FindFunction("APMsgInfo"), APMsgInfo(nResult1, "Subtração"), MsgInfo(nResult1, "Subtração"))
+Iif(FindFunction("APMsgInfo"), APMsgInfo(nResult2, "Multiplicação"), MsgInfo(nResult2, "Multiplicação"))
+Iif(FindFunction("APMsgInfo"), APMsgInfo(nResult3, "Divisão"), MsgInfo(nResult3, "Divisão"))
+Iif(FindFunction("APMsgInfo"), APMsgInfo(nResult4, "Exponenciação"), MsgInfo(nResult4, "Exponenciação"))
+Iif(FindFunction("APMsgInfo"), APMsgInfo(nResult5, "Resto/Mod"), MsgInfo(nResult5, "Resto/Mod"))
+
+Return
