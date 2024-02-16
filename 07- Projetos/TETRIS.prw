@@ -1,20 +1,17 @@
 
 #include "protheus.ch"
 /* ========================================================
-FunÁ„o U_TETRIS
-Autor J˙lio Wittwer
-Data 03/11/2014
-Vers„o 1.150226
-DescriÁao RÈplica do jogo Tetris, feito em AdvPL
+Fun√ß√£o U_TETRIS
+Descri√ßao R√©plica do jogo Tetris, feito em AdvPL
 Para jogar, utilize as letras :
 A ou J = Move esquerda
 D ou L = Move Direita
 S ou K = Para baixo
 W ou I = Rotaciona sentido horario
-Barra de EspaÁo = Dropa a peÁa
+Barra de Espa√ßo = Dropa a pe√ßa
 Pendencias
 Fazer um High Score
-Cores das peÁas
+Cores das pe√ßas
 O = Yellow
 I = light Blue
 L = Orange
@@ -23,19 +20,19 @@ S = Green
 J = Blue
 T = Purple
 ======================================================== */
-STATIC _aPieces := LoadPieces() // Array de peÁas do jogo 
+STATIC _aPieces := LoadPieces() // Array de pe√ßas do jogo 
 STATIC _aBlockRes := { "BLACK","YELOW2","LIGHTBLUE2","ORANGE2","RED2","GREEN2","BLUE2","PURPLE2" }
 STATIC _nGameClock // Tempo de jogo 
-STATIC _nNextPiece // Proxima peÁa a ser usada
+STATIC _nNextPiece // Proxima pe√ßa a ser usada
 STATIC _GlbStatus := 0 // 0 = Running 1 = PAuse 2 == Game Over
 STATIC _aBMPGrid := array(20,10) // Array de bitmaps de interface do jogo 
-STATIC _aBMPNext := array(4,5) // Array de botmaps da proxima peÁa
-STATIC _aNext := {} // Array com a definiÁ„o e posiÁ„o da proxima peÁa
-STATIC _aDropping := {} // Array com a definiÁ„o e posiÁ„o da peÁa em jogo
-STATIC _nScore := 0 // pontuaÁ„o da partida
+STATIC _aBMPNext := array(4,5) // Array de botmaps da proxima pe√ßa
+STATIC _aNext := {} // Array com a defini√ß√£o e posi√ß√£o da proxima pe√ßa
+STATIC _aDropping := {} // Array com a defini√ß√£o e posi√ß√£o da pe√ßa em jogo
+STATIC _nScore := 0 // pontua√ß√£o da partida
 STATIC _oScore // label para mostrar o score e time e mensagens
 STATIC _aMainGrid := {} // Array de strings com os blocos da interface representados em memoria
-STATIC _oTimer // Objeto timer de interface para a queda autom·tica da peÁa em jogo
+STATIC _oTimer // Objeto timer de interface para a queda autom√°tica da pe√ßa em jogo
  
 // =======================================================
 USER Function Tetris()
@@ -43,7 +40,7 @@ Local nC , nL
 Local oDlg
 Local oBackGround , oBackNext
 Local oFont , oLabel , oMsg
-// Fonte default usada na caixa de di·logo 
+// Fonte default usada na caixa de di√°logo 
 // e respectivos componentes filhos
 oFont := TFont():New('Courier new',,-16,.T.,.T.)
 DEFINE DIALOG oDlg TITLE "Tetris AdvPL" FROM 10,10 TO 450,365 ;
@@ -64,7 +61,7 @@ For nL := 1 to 20
  Next
 Next
  
-// Monta um Grid 4x4 para mostrar a proxima peÁa
+// Monta um Grid 4x4 para mostrar a proxima pe√ßa
 // ( Grid deslocado 110 pixels para a direita )
 @ 8, 118 BITMAP oBackNext RESOURCE "GRAY" ;
  SIZE 54,44 Of oDlg ADJUST NOBORDER PIXEL
@@ -78,18 +75,18 @@ For nL := 1 to 4
  
  Next
 Next
-// Label fixo, tÌtulo do Score.
+// Label fixo, t√≠tulo do Score.
 @ 80,120 SAY oLabel PROMPT "[Score]" SIZE 60,10 OF oDlg PIXEL
  
 // Label para Mostrar score, timers e mensagens do jogo
 @ 90,120 SAY _oScore PROMPT " " SIZE 60,120 OF oDlg PIXEL
  
-// Define um timer, para fazer a peÁa em jogo
-// descer uma posiÁ„o a cada um segundo
-// ( Nao pode ser menor, o menor tempo È 1 segundo )
+// Define um timer, para fazer a pe√ßa em jogo
+// descer uma posi√ß√£o a cada um segundo
+// ( Nao pode ser menor, o menor tempo √© 1 segundo )
 _oTimer := TTimer():New(1000, ;
  {|| MoveDown(.f.) , PaintScore() }, oDlg )
-// Botıes com atalho de teclado
+// Bot√µes com atalho de teclado
 // para as teclas usadas no jogo
 // colocados fora da area visivel da caixa de dialogo
 @ 480,10 BUTTON oDummyBtn PROMPT '&A' ;
@@ -118,40 +115,40 @@ _oTimer := TTimer():New(1000, ;
  ACTION ( DoAction('I') ) ;
  SIZE 1, 1 OF oDlg PIXEL
  
-@ 480,20 BUTTON oDummyBtn PROMPT '& ' ; // EspaÁo = Dropa
+@ 480,20 BUTTON oDummyBtn PROMPT '& ' ; // Espa√ßo = Dropa
  ACTION ( DoAction(' ') ) ;
  SIZE 1, 1 OF oDlg PIXEL
 @ 480,20 BUTTON oDummyBtn PROMPT '&P' ; // Pause
  ACTION ( DoPause() ) ;
  SIZE 1, 1 OF oDlg PIXEL
-// Na inicializaÁ„o do Dialogo uma partida È iniciada
+// Na inicializa√ß√£o do Dialogo uma partida √© iniciada
 oDlg:bInit := {|| Start() }
 ACTIVATE DIALOG oDlg CENTER
 Return
 /* ------------------------------------------------------------
-FunÁ„o Start() Inicia o jogo
+Fun√ß√£o Start() Inicia o jogo
 ------------------------------------------------------------ */
 STATIC Function Start()
 Local aDraw
-// Inicializa o grid de imagens do jogo na memÛria
-// Sorteia a peÁa em jogo
-// Define a peÁa em queda e a sua posiÁ„o inicial
+// Inicializa o grid de imagens do jogo na mem√≥ria
+// Sorteia a pe√ßa em jogo
+// Define a pe√ßa em queda e a sua posi√ß√£o inicial
 // [ Peca, direcao, linha, coluna ]
-// e Desenha a peÁa em jogo no Grid
+// e Desenha a pe√ßa em jogo no Grid
 // e Atualiza a interface com o Grid
 InitGrid()
 nPiece := randomize(1,len(_aPieces)+1)
 _aDropping := {nPiece,1,1,6}
 SetGridPiece(_aDropping,_aMainGrid)
 PaintMainGrid()
-// Sorteia a proxima peÁa e desenha 
+// Sorteia a proxima pe√ßa e desenha 
 // ela no grid reservado para ela 
 InitNext()
 _nNextPiece := randomize(1,len(_aPieces)+1)
 aDraw := {_nNextPiece,1,1,1}
 SetGridPiece(aDraw,_aNext)
 PaintNext()
-// Inicia o timer de queda autom·tica da peÁa em jogo
+// Inicia o timer de queda autom√°tica da pe√ßa em jogo
 _oTimer:Activate()
 // Marca timer do inicio de jogo 
 _nGameClock := seconds()
@@ -159,10 +156,10 @@ Return
 /* ----------------------------------------------------------
 Inicializa o Grid na memoria
 Em memoria, o Grid possui 14 colunas e 22 linhas
-Na tela, s„o mostradas apenas 20 linhas e 10 colunas
+Na tela, s√£o mostradas apenas 20 linhas e 10 colunas
 As 2 colunas da esquerda e direita, e as duas linhas a mais
 sao usadas apenas na memoria, para auxiliar no processo
-de validaÁ„o de movimentaÁ„o das peÁas.
+de valida√ß√£o de movimenta√ß√£o das pe√ßas.
 ---------------------------------------------------------- */
 STATIC Function InitGrid()
 _aMainGrid := array(20,"11000000000011")
@@ -173,14 +170,14 @@ STATIC Function InitNext()
 _aNext := array(4,"00000")
 return
 //
-// Aplica a peÁa no Grid.
-// Retorna .T. se foi possivel aplicar a peÁa na posicao atual
-// Caso a peÁa n„o possa ser aplicada devido a haver
-// sobreposiÁ„o, a funÁ„o retorna .F. e o grid n„o È atualizado
+// Aplica a pe√ßa no Grid.
+// Retorna .T. se foi possivel aplicar a pe√ßa na posicao atual
+// Caso a pe√ßa n√£o possa ser aplicada devido a haver
+// sobreposi√ß√£o, a fun√ß√£o retorna .F. e o grid n√£o √© atualizado
 //
 STATIC Function SetGridPiece(aOnePiece,aGrid)
-Local nPiece := aOnePiece[1] // Numero da peÁa
-Local nPos := aOnePiece[2] // PosiÁ„o ( para rotacionar ) 
+Local nPiece := aOnePiece[1] // Numero da pe√ßa
+Local nPos := aOnePiece[2] // Posi√ß√£o ( para rotacionar ) 
 Local nRow := aOnePiece[3] // Linha atual no Grid
 Local nCol := aOnePiece[4] // Coluna atual no Grid
 Local nL , nC
@@ -193,14 +190,14 @@ For nL := nRow to nRow+3
  For nC := 1 to 4
  If Substr(cPeca,nC,1) == '1'
  If substr(cTeco,nC,1) != '0'
- // Vai haver sobreposiÁ„o,
- // Nao d· para desenhar a peÁa
+ // Vai haver sobreposi√ß√£o,
+ // Nao d√° para desenhar a pe√ßa
  Return .F.
  Endif
  cTeco := Stuff(cTeco,nC,1,cPieceStr)
  Endif
  Next
- // Array temporario com a peÁa j· colocada
+ // Array temporario com a pe√ßa j√° colocada
  aadd(aTecos,cTeco)
 Next
 // Aplica o array temporario no array do grid
@@ -209,9 +206,9 @@ For nL := nRow to nRow+3
 Next
 Return .T.
 /* ----------------------------------------------------------
-FunÁ„o PaintMainGrid()
-Pinta o Grid do jogo da memÛria para a Interface
-Release 20150222 : OptimizaÁ„o na camada de comunicaÁ„o, apenas setar
+Fun√ß√£o PaintMainGrid()
+Pinta o Grid do jogo da mem√≥ria para a Interface
+Release 20150222 : Optimiza√ß√£o na camada de comunica√ß√£o, apenas setar
 o nome do resource / bitmap caso o resource seja diferente do atual.
 ---------------------------------------------------------- */
 STATIC Function PaintMainGrid()
@@ -222,13 +219,13 @@ for nL := 1 to 20
  nPeca := val(substr(cLine,nC+2,1))
  If _aBMPGrid[nL][nC]:cResName != _aBlockRes[nPeca+1]
  // Somente manda atualizar o bitmap se houve
- // mudanÁa na cor / resource desta posiÁ„o
+ // mudan√ßa na cor / resource desta posi√ß√£o
  _aBMPGrid[nL][nC]:SetBmp(_aBlockRes[nPeca+1])
  endif
  Next
 Next
 Return
-// Pinta na interface a prÛxima peÁa 
+// Pinta na interface a pr√≥xima pe√ßa 
 // a ser usada no jogo 
 STATIC Function PaintNext()
 Local nL, nC, cLine , nPeca
@@ -243,13 +240,13 @@ For nL := 1 to 4
 Next
 Return
 /* -----------------------------------------------------------------
-Carga do array de peÁas do jogo 
+Carga do array de pe√ßas do jogo 
 Array multi-dimensional, contendo para cada 
-linha a string que identifica a peÁa, e um ou mais
+linha a string que identifica a pe√ßa, e um ou mais
 arrays de 4 strings, onde cada 4 elementos 
 representam uma matriz binaria de caracteres 4x4 
-para desenhar cada peÁa
-Exemplo - PeÁa "O"
+para desenhar cada pe√ßa
+Exemplo - Pe√ßa "O"
 aLPieces[1][1] C "O"
 aLPieces[1][2][1] "0000" 
 aLPieces[1][2][2] "0110" 
@@ -258,40 +255,40 @@ aLPieces[1][2][4] "0000"
 ----------------------------------------------------------------- */
 STATIC Function LoadPieces()
 Local aLPieces := {}
-// PeÁa "O" , uma posiÁ„o
+// Pe√ßa "O" , uma posi√ß√£o
 aadd(aLPieces,{'O', { '0000','0110','0110','0000'}})
-// PeÁa "I" , em pÈ e deitada
+// Pe√ßa "I" , em p√© e deitada
 aadd(aLPieces,{'I', { '0000','1111','0000','0000'},;
  { '0010','0010','0010','0010'}})
-// PeÁa "S", em pÈ e deitada
+// Pe√ßa "S", em p√© e deitada
 aadd(aLPieces,{'S', { '0000','0011','0110','0000'},;
  { '0010','0011','0001','0000'}})
-// PeÁa "Z", em pÈ e deitada
+// Pe√ßa "Z", em p√© e deitada
 aadd(aLPieces,{'Z', { '0000','0110','0011','0000'},;
  { '0001','0011','0010','0000'}})
-// PeÁa "L" , nas 4 posiÁıes possiveis
+// Pe√ßa "L" , nas 4 posi√ß√µes possiveis
 aadd(aLPieces,{'L', { '0000','0111','0100','0000'},;
  { '0010','0010','0011','0000'},;
  { '0001','0111','0000','0000'},;
  { '0110','0010','0010','0000'}})
-// PeÁa "J" , nas 4 posiÁıes possiveis
+// Pe√ßa "J" , nas 4 posi√ß√µes possiveis
 aadd(aLPieces,{'J', { '0000','0111','0001','0000'},;
  { '0011','0010','0010','0000'},;
  { '0100','0111','0000','0000'},;
  { '0010','0010','0110','0000'}})
-// PeÁa "T" , nas 4 posiÁıes possiveis
+// Pe√ßa "T" , nas 4 posi√ß√µes possiveis
 aadd(aLPieces,{'T', { '0000','0111','0010','0000'},;
  { '0010','0011','0010','0000'},;
  { '0010','0111','0000','0000'},;
  { '0010','0110','0010','0000'}})
 Return aLPieces
 /* ----------------------------------------------------------
-FunÁ„o MoveDown()
-Movimenta a peÁa em jogo uma posiÁ„o para baixo.
-Caso a peÁa tenha batido em algum obst·culo no movimento
-para baixo, a mesma È fica e incorporada ao grid, e uma nova
-peÁa È colocada em jogo. Caso n„o seja possivel colocar uma
-nova peÁa, a pilha de peÁas bateu na tampa -- Game Over
+Fun√ß√£o MoveDown()
+Movimenta a pe√ßa em jogo uma posi√ß√£o para baixo.
+Caso a pe√ßa tenha batido em algum obst√°culo no movimento
+para baixo, a mesma √© fica e incorporada ao grid, e uma nova
+pe√ßa √© colocada em jogo. Caso n√£o seja possivel colocar uma
+nova pe√ßa, a pilha de pe√ßas bateu na tampa -- Game Over
 ---------------------------------------------------------- */
 STATIC Function MoveDown(lDrop)
 Local aOldPiece
@@ -299,19 +296,19 @@ Local aOldPiece
 If _GlbStatus != 0
  Return
 Endif
-// Clona a peÁa em queda na posiÁ„o atual
+// Clona a pe√ßa em queda na posi√ß√£o atual
 aOldPiece := aClone(_aDropping)
 If lDrop
  
- // Dropa a peÁa atÈ bater embaixo
+ // Dropa a pe√ßa at√© bater embaixo
  // O Drop incrementa o score em 1 ponto 
  // para cada linha percorrida. Quando maior a quantidade
  // de linhas vazias, maior o score acumulado com o Drop
  
- // Guarda a peÁa na posiÁ„o atual
+ // Guarda a pe√ßa na posi√ß√£o atual
  aOldPiece := aClone(_aDropping)
  
- // Remove a peÁa do Grid atual
+ // Remove a pe√ßa do Grid atual
  DelPiece(_aDropping,_aMainGrid)
  
  // Desce uma linha pra baixo
@@ -322,10 +319,10 @@ If lDrop
  // Encaixou, remove e tenta de novo
  DelPiece(_aDropping,_aMainGrid)
  
- // Guarda a peÁa na posiÁ„o atual
+ // Guarda a pe√ßa na posi√ß√£o atual
  aOldPiece := aClone(_aDropping)
  
- // Desce a peÁa mais uma linha pra baixo
+ // Desce a pe√ßa mais uma linha pra baixo
  _aDropping[3]++
 // Incrementa o Score
  _nScore++
@@ -333,9 +330,9 @@ If lDrop
  Enddo
  
  // Nao deu mais pra pintar, "bateu"
- // Volta a peÁa anterior, pinta o grid e retorna
+ // Volta a pe√ßa anterior, pinta o grid e retorna
  // isto permite ainda movimentos laterais
- // caso tenha espaÁo.
+ // caso tenha espa√ßo.
  
  _aDropping := aClone(aOldPiece)
  SetGridPiece(_aDropping,_aMainGrid)
@@ -343,15 +340,15 @@ If lDrop
  
 Else
  
- // Move a peÁa apenas uma linha pra baixo
+ // Move a pe√ßa apenas uma linha pra baixo
  
- // Primeiro remove a peÁa do Grid atual
+ // Primeiro remove a pe√ßa do Grid atual
  DelPiece(_aDropping,_aMainGrid)
  
- // Agora move a peÁa apenas uma linha pra baixo
+ // Agora move a pe√ßa apenas uma linha pra baixo
  _aDropping[3]++
  
- // Recoloca a peÁa no Grid
+ // Recoloca a pe√ßa no Grid
  If SetGridPiece(_aDropping,_aMainGrid)
  
  // Se deu pra encaixar, beleza
@@ -362,34 +359,34 @@ Else
  Endif
  
  // Opa ... Esbarrou em alguma coisa
- // Volta a peÁa pro lugar anterior
- // e recoloca a peÁa no Grid
+ // Volta a pe√ßa pro lugar anterior
+ // e recoloca a pe√ßa no Grid
  _aDropping := aClone(aOldPiece)
  SetGridPiece(_aDropping,_aMainGrid)
 // Incrementa o score em 4 pontos 
- // Nao importa a peÁa ou como ela foi encaixada
+ // Nao importa a pe√ßa ou como ela foi encaixada
  _nScore += 4
 // Agora verifica se da pra limpar alguma linha
  ChkMainLines()
  
- // Pega a proxima peÁa
+ // Pega a proxima pe√ßa
  nPiece := _nNextPiece
  _aDropping := {nPiece,1,1,6} // Peca, direcao, linha, coluna
 If !SetGridPiece(_aDropping,_aMainGrid)
  
- // Acabou, a peÁa nova nao entra (cabe) no Grid
+ // Acabou, a pe√ßa nova nao entra (cabe) no Grid
  // Desativa o Timer e mostra "game over"
  // e fecha o programa
 _GlbStatus := 2 // GAme Over
 // volta os ultimos 4 pontos ... 
  _nScore -= 4
-// Cacula o tempo de operaÁ„o do jogo 
+// Cacula o tempo de opera√ß√£o do jogo 
  _nGameClock := round(seconds()-_nGameClock,0)
  If _nGameClock < 0 
  // Ficou negativo, passou da meia noite 
  _nGameClock += 86400
  Endif
-// Desliga o timer de queda de peÁa em jogo
+// Desliga o timer de queda de pe√ßa em jogo
  _oTimer:Deactivate() 
  
  Endif
@@ -397,7 +394,7 @@ _GlbStatus := 2 // GAme Over
  // Se a peca tem onde entrar, beleza
  // -- Repinta o Grid -- 
  PaintMainGrid()
-// Sorteia a proxima peÁa
+// Sorteia a proxima pe√ßa
  // e mostra ela no Grid lateral
 If _GlbStatus != 2 
  // Mas apenas faz isso caso nao esteja em game over
@@ -406,7 +403,7 @@ If _GlbStatus != 2
  SetGridPiece( {_nNextPiece,1,1,1} , _aNext)
  PaintNext()
  Else
- // Caso esteja em game over, apenas limpa a proxima peÁa
+ // Caso esteja em game over, apenas limpa a proxima pe√ßa
  InitNext()
  PaintNext()
  Endif
@@ -415,9 +412,9 @@ If _GlbStatus != 2
 Endif
 Return
 /* ----------------------------------------------------------
-Recebe uma aÁ„o da interface, atravÈs de uma das letras
-de movimentaÁ„o de peÁas, e realiza a movimentaÁ„o caso
-haja espaÁo para tal.
+Recebe uma a√ß√£o da interface, atrav√©s de uma das letras
+de movimenta√ß√£o de pe√ßas, e realiza a movimenta√ß√£o caso
+haja espa√ßo para tal.
 ---------------------------------------------------------- */
 STATIC Function DoAction(cAct)
 Local aOldPiece
@@ -425,15 +422,15 @@ Local aOldPiece
 If _GlbStatus != 0 
  Return
 Endif
-// Clona a peÁa em queda
+// Clona a pe√ßa em queda
 aOldPiece := aClone(_aDropping)
 if cAct $ 'AJ'
 // Movimento para a Esquerda (uma coluna a menos)
- // Remove a peÁa do grid
+ // Remove a pe√ßa do grid
  DelPiece(_aDropping,_aMainGrid)
  _aDropping[4]--
  If !SetGridPiece(_aDropping,_aMainGrid)
- // Se nao foi feliz, pinta a peÁa de volta
+ // Se nao foi feliz, pinta a pe√ßa de volta
  _aDropping := aClone(aOldPiece)
  SetGridPiece(_aDropping,_aMainGrid)
  Endif
@@ -442,11 +439,11 @@ if cAct $ 'AJ'
  
 Elseif cAct $ 'DL'
 // Movimento para a Direita ( uma coluna a mais )
- // Remove a peÁa do grid
+ // Remove a pe√ßa do grid
  DelPiece(_aDropping,_aMainGrid)
  _aDropping[4]++'
  If !SetGridPiece(_aDropping,_aMainGrid)
- // Se nao foi feliz, pinta a peÁa de volta
+ // Se nao foi feliz, pinta a pe√ßa de volta
  _aDropping := aClone(aOldPiece)
  SetGridPiece(_aDropping,_aMainGrid)
  Endif
@@ -457,7 +454,7 @@ Elseif cAct $ 'WI'
  
  // Movimento para cima ( Rotaciona sentido horario )
  
- // Remove a peÁa do Grid
+ // Remove a pe√ßa do Grid
  DelPiece(_aDropping,_aMainGrid)
  
  // Rotaciona
@@ -467,8 +464,8 @@ Elseif cAct $ 'WI'
  Endif
  
  If !SetGridPiece(_aDropping,_aMainGrid)
- // Se nao consegue colocar a peÁa no Grid
- // Nao È possivel rotacionar. Pinta a peÁa de volta
+ // Se nao consegue colocar a pe√ßa no Grid
+ // Nao √© possivel rotacionar. Pinta a pe√ßa de volta
  _aDropping := aClone(aOldPiece)
  SetGridPiece(_aDropping,_aMainGrid)
  Endif
@@ -478,7 +475,7 @@ Elseif cAct $ 'WI'
  
 ElseIF cAct $ 'SK'
  
- // Desce a peÁa para baixo uma linha intencionalmente 
+ // Desce a pe√ßa para baixo uma linha intencionalmente 
  MoveDown(.F.)
  
  // se o movimento foi intencional, ganha + 1 ponto 
@@ -486,8 +483,8 @@ ElseIF cAct $ 'SK'
  
 ElseIF cAct == ' '
  
- // Dropa a peÁa - empurra para baixo atÈ a ˙ltima linha
- // antes de baer a peÁa no fundo do Grid
+ // Dropa a pe√ßa - empurra para baixo at√© a √∫ltima linha
+ // antes de baer a pe√ßa no fundo do Grid
  MoveDown(.T.)
  
 Endif
@@ -508,7 +505,7 @@ Endif
 PaintScore()
 Return
 /* -----------------------------------------------------------------------
-Remove uma peÁa do Grid atual
+Remove uma pe√ßa do Grid atual
 ----------------------------------------------------------------------- */
 STATIC Function DelPiece(aPiece,aGrid)
 Local nPiece := aPiece[1]
@@ -517,9 +514,9 @@ Local nRow := aPiece[3]
 Local nCol := aPiece[4]
 Local nL, nC
 Local cTeco, cPeca
-// Como a matriz da peÁa È 4x4, trabalha em linhas e colunas
-// Separa do grid atual apenas a ·rea que a peÁa est· ocupando
-// e desliga os pontos preenchidos da peÁa no Grid.
+// Como a matriz da pe√ßa √© 4x4, trabalha em linhas e colunas
+// Separa do grid atual apenas a √°rea que a pe√ßa est√° ocupando
+// e desliga os pontos preenchidos da pe√ßa no Grid.
 For nL := nRow to nRow+3
  cTeco := substr(aGrid[nL],nCol,4)
  cPeca := _aPieces[nPiece][1+nPos][nL-nRow+1]
@@ -541,13 +538,13 @@ Local nL := {}
 For nL := 20 to 2 step -1
  
  // Sempre varre de baixo para cima
- // Pega uma linha, e remove os espaÁos vazios
+ // Pega uma linha, e remove os espa√ßos vazios
  cTeco := substr(_aMainGrid[nL],3)
  cNewTeco := strtran(cTeco,'0','')
  
  If len(cNewTeco) == len(cTeco)
- // Se o tamanho da linha se manteve, n„o houve
- // nenhuma reduÁ„o, logo, n„o h· espaÁos vazios
+ // Se o tamanho da linha se manteve, n√£o houve
+ // nenhuma redu√ß√£o, logo, n√£o h√° espa√ßos vazios
  // Elimina esta linha e acrescenta uma nova linha
  // em branco no topo do Grid
  adel(_aMainGrid,nL)
@@ -558,7 +555,7 @@ For nL := 20 to 2 step -1
  Endif
  
 Next
-// PontuaÁ„o por linhas eliminadas 
+// Pontua√ß√£o por linhas eliminadas 
 // Quanto mais linhas ao mesmo tempo, mais pontos
 If nErased == 4
  _nScore += 100
